@@ -1,28 +1,31 @@
-# Wildfire Risk Assessment: Predictive Modeling for High Wildfire Risk Zones in the West Coast 
-## Introduction 
-Washington, Oregon, and California, which comprise the West Coast of the United States, are no strangers to wildfires. Composed of large stretches of forests and grasslands, wildfires are a natural and recurring part of the region’s ecosystem [1][2]. Historically, these fires have served to clear out dead vegetation, preparing soil for new growth and generally maintaining the health of the area [1]. However, in recent years these fires have grown in frequency and intensity, transforming them from natural ecological processes into highly destructive events. The increase in frequency and intensity of wildfires in the West Coast, and across the United States, has been strongly linked to climate change [2]. As temperatures continue to rise and warmer, drier conditions become more common, the West Coast is expected to become more susceptible to destructive wildfires [2]. Although the primary objective should be to slow, and ultimately reverse climate change to reduce the occurrence and severity of these fires, predictive modeling can play a crucial role in mitigating wildfire outbreaks.
+# Wildfire Risk Assessment: Predicting West Coast Wildfire Size and Severity
+## Introduction
+Wildfires on the West Coast of the United States, including Washington, Oregon, and California, are becoming increasingly severe due to climate change and human activity. Predicting the potential size and severity of these fires is critical for mitigation and prevention efforts. This project applies a Random Forest predictive model to estimate wildfire intensity and burned acreage, helping identify areas most at risk for large-scale fires.
 
-A predictive model is essentially a mathematical model which predicts outcomes by analyzing historical data. These models have been widely used to assess wildfire risk zones in academic research as well as by local and federal government agencies [3]. In this project, I develop a similar wildfire risk assessment by implementing a random forest algorithm to create a simple predictive model. Wildfire data from 1990 to 2025 were collected to provide a historical foundation for the models, while corresponding weather and population data were collected to identify potential trends and contributing factors. 
+This project analyzes publically available historical wildfire, weather, and population data from 1990 to 2025 to:
 
-The following sections outline the development of the predictive model. Section II summarizes the rationale behind the data collected and analyzes hidden patterns and structures in the datasets. Section III explores the process of creating the model, and how it can be reproduced. While Section IV and V discuss the performance and results of the model created and conculdes how effective it was. 
+- Predict the potential size (acres burned) of future wildfires.
+- Assess the severity of fires based on environmental and population factors.
 
+Together, these methods provide actionable insights into wildfire risk, enabling more informed prevention, resource allocation, and response strategies.
 
-## II. Data Description
-Raw data encompassing wildfire records, daily weather observations, and county level population density across the West Coast were compiled from the following sources: 
+## Data Sources
+The project integrates multiple datasets from official sources into three reduced subsets (1) wildfire data, (2) weather data, and (3) population data. 
 
-#### Table I. Orginal Data Sources
-|Dataset Name                             | Organization                                 | Visit Source                                                                                                         |
-|-----------------------------------------|----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
-| California Fire Perimeters (1950+)      | California Natural Resources Agency          |  [Source](https://gis.data.cnra.ca.gov/datasets/CALFIRE-Forestry::california-historical-fire-perimeters/about?layer=2)|
-| ODF Fire Occurrence Data 2000 - 2022    | Oregon Department of Forestry                | [Source](https://data.oregon.gov/Natural-Resources/ODF-Fire-Occurrence-Data-2000-2022/fbwv-q84y/about_data)           |
-| Washington Large Fires 1973 - 2023      | Washington Department of Natural Resources   | [Source](https://data-wadnr.opendata.arcgis.com/datasets/wadnr::washington-large-fires-1973-2023/about )              |
-|Historical Weather Data                  | PRISM                                        | [Source](https://prism.oregonstate.edu/explorer/bulk.php)                                                             |
-|County and Place Population              | US Census                                    | [Source](https://www.citypopulation.de/en/usa/places/washington/)                                                     |
+---
 
-### *A. Wildfire Data*
-Wildfire data for the past 35 years was collected individually from each West Coast state to support the two models’ analyses  of wildfire trends. To ensure accuracy, all wildfire data was collected from official government sources. Data from California and Washington were available in GeoJSON format, providing the location and shape of each fire which occurred between 1990 and 2025. While data from the state of Washington included acreage burned in each fire, this information needed to be calculated for the state of California using geometry points. Data acquired from the state of Oregon, contained the same information regarding the location, shape, and acreage burned of each wildfire, but was provided in CSV format. All three datasets were combined into a larger, lower dimensional dataset which contained the following attributes: 
+### Wildfire Data
+Wildfire data for the past 35 years was collected individually from each West Coast state and combined into a lower-dimensional dataset which was utilized in the creation of the predictive model.
 
-#### Table II. Lower Dimensional Historic Wildfire Data for Washington, Oregon and California
+**Sources:**
+
+| State | Dataset | Organization | Link |
+|-------|--------|-------------|------|
+| CA | California Fire Perimeters (1950+) | California Natural Resources Agency | [Link](https://gis.data.cnra.ca.gov/datasets/CALFIRE-Forestry::california-historical-fire-perimeters/about?layer=2) |
+| OR | ODF Fire Occurrence Data (2000–2022) | Oregon Department of Forestry | [Link](https://data.oregon.gov/Natural-Resources/ODF-Fire-Occurrence-Data-2000-2022/fbwv-q84y/about_data) |
+| WA | Washington Large Fires (1973–2023) | Washington State Department of Natural Resources | [Link](https://data-wadnr.opendata.arcgis.com/datasets/wadnr::washington-large-fires-1973-2023/about) |
+
+**Final Dataset Attributes:**
 | Attribute   | Type               | Example Value | Description                                 |
 |-------------|--------------------|----------------|---------------------------------------------|
 | FIRE        | Nominal (string)   | "PALISADES"    | Fire name                                   |
@@ -35,16 +38,14 @@ Wildfire data for the past 35 years was collected individually from each West Co
 | LONG        | Numeric (real)     | -118.574       | Longitude of fire location                  |
 | STATE       | Nominal (string)   | "CA"           | West Coast state where fire occurred        |
 
-To better understand the combined wildfire data, the distribution of acreage burned by state was visualized using a Kernel Density Estimate (KDE) plot. KDE plots are commonly used to approximate the underlying probability distribution of a dataset [4]. The KDE analysis for the wildfire data revealed that, although California experiences more fires overall, all three West Coast states exhibit a similar probability distribution of burned acreage (Figure 1). This means that despite differences in fire frequency between states, all three West Coast states have comparable expectations regarding the scale of future wildfires. Consequently, it can be assumed that predictive model results may be generalized across the entire West Coast Region.
+---
 
-![image](https://github.com/user-attachments/assets/ed1f696c-c1a6-487d-b346-87a7cc634700)
+### Weather Data
+Weather data from all three West Coast states was collected from Oregon State University's PRISM Group. PRISM Historic Weather Data: includes temperature, precipitation, and vapor-pressure deficit for all three states.
 
-*Figure 1. Probability Distribution of Burned Acreage in West Coast Wildfire Incidents by State.*
+[Visit PRISM Website](https://prism.oregonstate.edu/explorer/bulk.php)
 
-### *B. Weather and Population Data*
-Due to the documented link between the increase in frequency and intensity of wildfires and climate change [2], weather data were collected to support the historic wildfire data summarized above. Daily weather data for all three states were collected through the Parameter-elevation Regressions on Independent Slopes Model (PRISM), provided by the Northwest Alliance for Computational Science and Engineering. This dataset provided climate context for each wildfire occurrence, supplementing the wildfire location and dimension data with temperature, precipitation, and vapor-pressure deficit data. All attributes of the collected weather data are listed in the following table: 
-
-#### Table III. PRISM Historic West Coast Weather Data
+**Dataset Attributes:**
 | Attribute        | Type                | Example Value | Description                                      |
 |------------------|---------------------|----------------|--------------------------------------------------|
 | Name             | Nominal (string)    | "Adams"        | County of weather station                        |
@@ -61,9 +62,14 @@ Due to the documented link between the increase in frequency and intensity of wi
 | vpdmax (hPa)     | Numeric (real)      | 0.9            | Vapor pressure-deficit max in hPa                |
 | State            | Nominal (string)    | WA             | State where weather location is located          |
 
-Since humans play a critical role in climate change and human activity has been shown to increase wildfire occurrence [5], population data was also incorporated into the model. State census data was scraped directly from the [https://citypopulation.de/]([https://citypopulation.de/]) website and were utilized to enhance overall predictive accuracy. The population data collected included county, state and population by decade. The dataset’s attributes are outlined below:
+---
 
-#### Table IV. Census Population Data for the West Coast
+### Population Data
+County-level population data for Washington, Oregon, and California were collected by decade from US Census data collated by City Population.
+
+[Visit City Population Website](https://www.citypopulation.de/)
+
+**Dataset Attributes:**
 | Attribute          | Type              | Example Value | Description                                |
 |--------------------|-------------------|----------------|--------------------------------------------|
 | County             | Nominal (string)  | "Adams"        | County name                                 |
@@ -73,14 +79,122 @@ Since humans play a critical role in climate change and human activity has been 
 | Population 2010    | Numeric (real)    | 17800          | County population in 2010                   |
 | Population 2020    | Numeric (real)    | 19000          | County population in 2020                   |
 
+## Methodology
+Wildfire prediction relies on analyzing historical fire events, weather conditions, and population density to understand where fires are most likely to occur and how severe they might be. In this project, each fire is represented as a structured feature vector that is fed into a Random Forest Model, which predicts whether a fire is likely to be low-risk or high-risk. The model then identifies which factors have the biggest impact on fire size and intensity by calculating feature importance.
 
-## III. Methodology
-### *The Random Forests Algorithm* 
-The Random Forest method is a powerful, predictive modeling technique that creates multiple random decision trees to construct a single ensemble with high predictive accuracy [7]. While this process seems tedious, the Random Forest modeling algorithm is simple to implement using common Python libraries like SciKit-learn and Numpy. 
+---
 
-The development of the predictive model in this project followed a multi-step process (Figure 2) aimed at analyzing wildfire risk zones across the West Coast. Using historic fire, daily weather, and population density data from 1990 to 2025, the model attempts to identify fire prone areas to facilitate fire prevention efforts. The latitude and longitude coordinates from the historical fire dataset serve as critical reference points for pinpointing high-risk locations associated with key weather and population data features.
+### Data Preprocessing
+Before any modeling was performed, the dataset was carefully preprocessed and split into training and testing sets to ensure the model could learn patterns effectively and be evaluated reliably. Missing values were handled using appropriate imputation methods, categorical variables were encoded, and all features were standardized as needed to create consistent, structured inputs for the Random Forest model.
 
-<img width="677" alt="image" src="https://github.com/user-attachments/assets/9df5d668-6054-4336-a84e-806a2410aa5b" />
+- Missing numeric values are imputed with the mean.
+- Missing categorical values are imputed with the most frequent category and one-hot encoded (i.e. converted into binary format).
+- Dataset split into training (80%) and testing (20%) sets, stratified by target.
 
-*Figure 2. Random Forest Predictive Modeling Flow Chart*
+**Training set size:** 31,692    
+**Test set size:** 7,924
 
+
+**Goal**: Ensure clean, consistent, and properly encoded data for modeling.
+
+---
+
+### Feature Representation
+In the training dataset, each fire event was transformed into a feature vector summarizing all relevant environmental, demographic, and location information. Representing each fire in this way enabled the model to more effectively learn patterns associated with fire size and severity.
+
+**Feature vectors created for this model included:**
+- Daily temperature (min, mean, max)
+- Precipitation
+- Vapor pressure deficit (min and max)
+- Population density by decade
+- Location information (state, weather station)
+
+
+**Goal:** Transform each fire into a structured input (feature vector) suitable for predictive modeling.
+
+---
+
+### Random Forest Modeling
+The feature vectors summarizing each fire were used as input to train the Random Forest model, which aimed to predict wildfire risk and estimate potential severity. Random Forest is an ensemble learning method that generates multiple decision trees and combines their predictions to improve accuracy and generalization on unseen data (i.e., the testing set).
+
+**Ensemble Learning:** The Random Forest model creates multiple decision trees using bootstrapped samples of the dataset. Each tree considers a random subset of features, reducing overfitting, increasing model stability, and allowing the system to capture complex patterns in weather, environmental, and population data.
+
+**Prediction Aggregation:** The predictions from all trees are combined using majority vote for classification tasks and averaging for regression tasks. This produces a single prediction that balances variance and bias, improving reliability.
+
+**Feature Importance:** The influence of each input variable on the model's predictions is calculated to determine which factors strongly drive wildfire size and severity.
+
+**Goal:** Accurately predict wildfire occurrence, potential size, and intensity.
+
+---
+
+
+### Model Evaluation
+After training, the Random Forest model was evaluated on the testing dataset to assess its performance on unseen data.
+
+- Accuracy, AUC-ROC, Precision, Recall, and F1-Score were used to measure classification performance.
+
+- Confusion matrix and ROC curve visualizations were generated to examine model quality and decision thresholds.
+
+- Feature importance was calculated to identify which variables most strongly influence fire size and severity.
+
+Goal: Quantify predictive performance on unseen data, understand contributing factors, and identify high-risk areas for effective wildfire mitigation.
+
+## Results  
+The Random Forest model was evaluated on the held-out testing dataset to measure its ability to generalize beyond the training data. Model performance was assessed using a combination of classification metrics (Accuracy, Precision, Recall, F1-Score, and AUC-ROC), as well as visualization tools such as the confusion matrix (Figure 1.) and ROC curve (Figure 2.). These results provide insight not only into the overall predictive power of the model, but also into its ability to correctly identify high-risk wildfire events.  
+
+While the model shows strong overall accuracy and a high AUC-ROC score, performance is not uniform across classes. It performs particularly well at identifying low-risk fires, but faces challenges in consistently detecting high-risk cases — an important area for future improvement. Feature importance analysis further highlights the key environmental and demographic drivers of wildfire severity, offering actionable insights for prevention and mitigation efforts.
+
+
+#### Model Evaluation Results  
+**Accuracy:** 0.8718  
+**AUC-ROC:** 0.8980  
+
+**Classification Report:**  
+| Class | Precision | Recall | F1-Score | Support |
+|-------|-----------|--------|----------|---------|
+| **0 (Low Risk)** | 0.88 | 0.98 | 0.93 | 6777 |
+| **1 (High Risk)** | 0.68 | 0.21 | 0.33 | 1147 |
+| **Accuracy** |       |        | **0.87** | 7924 |
+| **Macro Avg** | 0.78 | 0.60 | 0.63 | 7924 |
+| **Weighted Avg** | 0.85 | 0.87 | 0.84 | 7924 |
+
+<p align="center">
+  <img width="390" height="343" alt="Confusion Matrix" src="https://github.com/user-attachments/assets/e5813462-e639-4404-8c66-59fadc31809a" />
+</p>
+<p align="center"><i>Figure 1:</b> Confusion Matrix of wildfire predictions</i></p>
+
+<p align="center">
+  <img width="590" height="426" alt="ROC Curve" src="https://github.com/user-attachments/assets/50af86ee-6dba-4a37-a326-507bfdf027c3" />
+</p>
+<p align="center"><i>Figure 2:</b> ROC Curve showing model performance</i></p>
+
+Key factors driving wildfire risk and potential size include temperature extremes (both minimum and maximum), vapor pressure deficit, and local population density. These variables influence both the likelihood and severity of fires, highlighting the combined role of climatic conditions and human activity in shaping wildfire behavior.
+<p align="center">
+  <img width="613" height="463" alt="image" src="https://github.com/user-attachments/assets/f64e8833-4502-417b-ac85-c73555fe9865" />
+</p>
+<p align="center"><i>Figure 3:</b> Bar graph showing the relative importance of each feature in the Random Forest model. Features such as temperature extremes, precipitation, vapor pressure deficit, and population density have the greatest influence on wildfire size and severity predictions.</i></p>
+
+## Conclusions
+- **Predictive Insights:** The Random Forest model effectively identifies high-risk wildfire areas and estimates potential fire size across the West Coast.  
+- **Key Drivers:** Temperature extremes, vapor pressure deficit, precipitation, and local population density are the most influential factors in predicting wildfire severity.  
+- **Risk Mitigation:** Results can inform proactive resource allocation, targeted fire prevention, and emergency planning.  
+- **Future Work:**  
+  - Incorporate **temporal trends** to capture seasonal or multi-year wildfire patterns.  
+  - Explore **alternative machine learning models** (e.g., gradient boosting, neural networks) to improve high-risk fire detection.  
+  - Integrate **additional environmental and human activity data** (e.g., vegetation type, land use) to enhance model accuracy and granularity.
+
+
+## References
+1. [Science Recent. *Why Does the Western US Have So Many Wildfires Every Year?* (2023)](https://sciencerecent.com/environment/why-does-the-western-us-have-so-many-wildfires-every-year/)  
+
+2. [The Nature Conservancy. *Yes, Climate Change is Raising the Risks—and Stakes—of Extreme Wildfires* (2024)](https://www.nature.org/en-us/what-we-do/our-priorities/tackle-climate-change/climate-change-stories/extreme-wildfires-are-getting-worse-with-climate-change/)  
+
+3. [USGS. *New Federal Partnership Will Advance Predictive Models of Wildfire Behavior* (2020)](https://www.usgs.gov/news/national-news-release/new-federal-partnership-will-advance-predictive-models-wildfire-behavior)  
+
+4. Plesovskaya, E., & Ivanov, S. (2021). [*An Empirical Analysis of KDE-based Generative Models on Small Datasets.* Procedia Computer Science, 193, 442–452.](https://doi.org/10.1016/j.procs.2021.10.046)  
+
+5. Mann, M. L., et al. (2016). [*Incorporating Anthropogenic Influences into Fire Probability Models: Effects of Human Activity and Climate Change on Fire Activity in California.* PLOS ONE, 11(4), e0153589.](https://doi.org/10.1371/journal.pone.0153589)  
+
+6. Jones, M. W., Smith, A., Betts, R., Canadell, J. G., Prentice, I. C., & Le Quéré, C. (2020). [*Climate Change Increases the Risk of Wildfires.* JSTOR.](https://www.jstor.org/stable/resrep51248)  
+
+7. Cheng, L., Chen, X., De Vos, J., Lai, X., & Witlox, F. (2019). [*Applying a Random Forest Method Approach to Model Travel Mode Choice Behavior.* Travel Behaviour and Society, 14, 1–10.](https://doi.org/10.1016/j.tbs.2018.09.002)  
