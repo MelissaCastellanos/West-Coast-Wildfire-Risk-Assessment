@@ -9,6 +9,20 @@ This project analyzes publically available historical wildfire, weather, and pop
 
 Together, these methods provide actionable insights into wildfire risk, enabling more informed prevention, resource allocation, and response strategies.
 
+## Table of Contents  
+- [Data Sources](#Data-Sources)
+  - [Wildfire Data](#Wildfire-Data)
+  - [Weather Data](#Weather-Data)
+  - [Population Data](#Population-Data)     
+- [Methodology](#Methodology)
+  - [Data Preprocessing](#Data-Preprocessing)
+  - [Feature Representation](#Feature-Representation)
+  - [Random Forest Modeling](#Random-Forest-Modeling)
+  - [Model Evaluation](#Model-Evaluation)   
+- [Results](#Results)  
+- [Conclusion](#Conclusion)  
+- [References](#References)  
+
 ## Data Sources
 The project integrates multiple datasets from official sources into three reduced subsets (1) wildfire data, (2) weather data, and (3) population data. 
 
